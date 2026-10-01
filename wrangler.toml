@@ -1,0 +1,10 @@
+name = "vantage-landscaping"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "CHAT_KV"
+id = "REPLACE_WITH_CHAT_KV_ID"
+
+[[kv_namespaces]]
+binding = "SMS_KV"
+id = "REPLACE_WITH_SMS_KV_ID"
