@@ -3,8 +3,8 @@ compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "CHAT_KV"
-id = "REPLACE_WITH_CHAT_KV_ID"
+id = "0c4014e70c0848899e2a32e0ec53dcc4"
 
 [[kv_namespaces]]
 binding = "SMS_KV"
-id = "REPLACE_WITH_SMS_KV_ID"
+id = "ebe309f4da7c4c44a7ba4af9757f1670"
