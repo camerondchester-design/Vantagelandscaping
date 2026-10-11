@@ -1,15 +1,17 @@
 /* Vantage Landscaping — SMS opt-in backend (Netlify Function)
  *
  * POST /.netlify/functions/sms-optin
- * Body: { full_name, phone, sms_consent: true }
+ * Body: { full_name, phone, sms_consent: boolean, page_url?, user_agent? }
+ *
+ * Consent is OPTIONAL: submitting with sms_consent:false succeeds and records
+ * NO sms opt-in. Consent must never be forced (10DLC requirement).
  *
  * Storage: Netlify Blobs store "sms-optins"
- *   optin/<e164phone>.json -> { full_name, phone, sms_consent, ts, ip, user_agent }
+ *   optin/<e164phone>.json -> { full_name, phone, sms_consent, ts, ip,
+ *                               page_url, user_agent, created_at, updated_at }
  *
  * Requires the @netlify/blobs package in the site's dependencies.
  */
-
-const crypto = require("crypto");
 
 const STORE_NAME = "sms-optins";
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
@@ -102,7 +104,11 @@ exports.handler = async (event) => {
   const phone = toE164(phone_raw);
   if (!phone) return json(400, { error: "Please enter a valid 10-digit US mobile number." });
 
-  if (!sms_consent) return json(400, { error: "You must check the consent box to sign up." });
+  // Consent is optional: must be an explicit boolean, recorded exactly as given.
+  // sms_consent:false submits fine and records NO opt-in.
+  if (typeof sms_consent !== "boolean") {
+    return json(400, { error: "Consent choice is required." });
+  }
 
   try {
     const { getStore } = getBlobs();
@@ -115,16 +121,17 @@ exports.handler = async (event) => {
     const record = {
       full_name,
       phone,
-      sms_consent: true,
+      sms_consent: sms_consent === true,
       ts: Date.now(),
       ip,
-      user_agent: String((event.headers || {})["user-agent"] || "").slice(0, 300),
+      page_url: String(body.page_url || "").slice(0, 500),
+      user_agent: String(body.user_agent || String((event.headers || {})["user-agent"] || "")).slice(0, 300),
       updated_at: existing ? Date.now() : undefined,
-      created_at: existing ? existing.created_at : Date.now(),
+      created_at: existing && existing.created_at ? existing.created_at : Date.now(),
     };
 
     await store.setJSON(key, record);
-    return json(200, { ok: true });
+    return json(200, { ok: true, sms_consent: record.sms_consent });
   } catch (e) {
     return json(500, { error: e.message || "Server error. Please try again." });
   }
