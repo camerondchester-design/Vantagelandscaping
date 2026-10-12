@@ -39,6 +39,19 @@ function getBlobs() {
   }
 }
 
+/* Resolve the Blobs store. Uses explicit credentials when provided
+ * (NETLIFY_SITE_ID + NETLIFY_AUTH_TOKEN env vars), otherwise falls back
+ * to Netlify's automatic function context. */
+function openStore() {
+  const { getStore } = getBlobs();
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_AUTH_TOKEN;
+  if (siteID && token) {
+    return getStore({ name: STORE_NAME, siteID, token });
+  }
+  return getStore(STORE_NAME);
+}
+
 function json(status, body) {
   return {
     statusCode: status,
@@ -144,8 +157,7 @@ async function handleAdminAck(event, store) {
 
 exports.handler = async (event) => {
   try {
-    const { getStore } = getBlobs();
-    const store = getStore(STORE_NAME);
+    const store = openStore();
     const path = String(event.path || "");
     const suffix = path.replace(/^.*\/\.netlify\/functions\/telnyx-webhook/, "") || "/";
 
