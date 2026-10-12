@@ -27,17 +27,22 @@ function getBlobs() {
   }
 }
 
-/* Resolve the Blobs store. Uses explicit credentials when provided
- * (NETLIFY_SITE_ID + NETLIFY_AUTH_TOKEN env vars), otherwise falls back
- * to Netlify's automatic function context. */
+/* Resolve the Blobs store. Prefers Netlify's automatic function context
+ * (verified working in production); falls back to explicit credentials
+ * (NETLIFY_SITE_ID + NETLIFY_AUTH_TOKEN env vars) when auto-context
+ * is unavailable. */
 function openStore() {
   const { getStore } = getBlobs();
-  const siteID = process.env.NETLIFY_SITE_ID;
-  const token = process.env.NETLIFY_AUTH_TOKEN;
-  if (siteID && token) {
-    return getStore({ name: STORE_NAME, siteID, token });
+  try {
+    return getStore(STORE_NAME);
+  } catch (e) {
+    const siteID = process.env.NETLIFY_SITE_ID;
+    const token = process.env.NETLIFY_AUTH_TOKEN;
+    if (siteID && token) {
+      return getStore({ name: STORE_NAME, siteID, token });
+    }
+    throw e;
   }
-  return getStore(STORE_NAME);
 }
 
 function json(status, body) {
