@@ -84,6 +84,35 @@ function toE164(raw) {
 }
 
 exports.handler = async (event) => {
+  // Temporary Blobs diagnostics (remove after debugging).
+  if ((event.queryStringParameters || {}).debug === "blobs") {
+    const out = {};
+    const { getStore } = getBlobs();
+    try {
+      const s = getStore(STORE_NAME);
+      out.auto_getStore = "ok";
+      try { await s.list(); out.auto_list = "ok"; }
+      catch (e) { out.auto_list = `FAIL: ${e.message}`; }
+      try { await s.setJSON("debug-probe.json", { t: Date.now() }); out.auto_setJSON = "ok"; }
+      catch (e) { out.auto_setJSON = `FAIL: ${e.message}`; }
+    } catch (e) { out.auto_getStore = `FAIL: ${e.message}`; }
+    const siteID = process.env.NETLIFY_SITE_ID;
+    const token = process.env.NETLIFY_AUTH_TOKEN;
+    out.has_siteID = !!siteID;
+    out.has_token = !!token;
+    if (siteID && token) {
+      try {
+        const s2 = getStore({ name: STORE_NAME, siteID, token });
+        out.explicit_getStore = "ok";
+        try { await s2.list(); out.explicit_list = "ok"; }
+        catch (e) { out.explicit_list = `FAIL: ${e.message}`; }
+        try { await s2.setJSON("debug-probe.json", { t: Date.now() }); out.explicit_setJSON = "ok"; }
+        catch (e) { out.explicit_setJSON = `FAIL: ${e.message}`; }
+      } catch (e) { out.explicit_getStore = `FAIL: ${e.message}`; }
+    }
+    return json(200, out);
+  }
+
   // CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
