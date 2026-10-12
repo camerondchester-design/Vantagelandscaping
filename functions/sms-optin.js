@@ -39,7 +39,7 @@ function openStore() {
     const siteID = process.env.NETLIFY_SITE_ID;
     const token = process.env.NETLIFY_AUTH_TOKEN;
     if (siteID && token) {
-      return getStore({ name: STORE_NAME, siteID, token });
+      return getStore(STORE_NAME, { siteID, token });
     }
     throw e;
   }
@@ -102,7 +102,7 @@ exports.handler = async (event) => {
     out.has_token = !!token;
     if (siteID && token) {
       try {
-        const s2 = getStore({ name: STORE_NAME, siteID, token });
+        const s2 = getStore(STORE_NAME, { siteID, token });
         out.explicit_getStore = "ok";
         try { await s2.list(); out.explicit_list = "ok"; }
         catch (e) { out.explicit_list = `FAIL: ${e.message}`; }
