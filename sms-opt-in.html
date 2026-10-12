@@ -202,7 +202,9 @@
     <h1>Get Text Updates</h1>
     <p class="subtitle">Sign up to receive delivery confirmations and order updates from Vantage Landscaping. We will only text you when it matters.</p>
 
-    <form id="smsForm">
+    <form id="smsForm" name="sms-optin" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="sms-optin">
+      <p hidden><input name="bot-field" tabindex="-1" autocomplete="off"></p>
       <div class="form-group">
         <label for="full_name">Your Name</label>
         <input type="text" id="full_name" name="full_name" placeholder="Cameron Chester" autocomplete="name" required>
@@ -213,7 +215,7 @@
       </div>
 
       <div class="consent-row">
-        <input type="checkbox" id="sms_consent" name="sms_consent">
+        <input type="checkbox" id="sms_consent">
         <label for="sms_consent" class="consent-label">
           <strong>Yes, I want to receive text messages</strong> from Vantage Landscaping LLC, including delivery confirmations and order updates. Message &amp; data rates may apply. Message frequency varies.
         </label>
@@ -250,30 +252,33 @@
     btn.disabled = true;
     btn.textContent = 'Submitting…';
 
-    const data = {
-      full_name: form.full_name.value.trim(),
-      phone: form.phone.value.trim(),
-      sms_consent: form.sms_consent.checked,
-      page_url: window.location.href,
-    };
+    const data = new URLSearchParams();
+    data.append('form-name', 'sms-optin');
+    data.append('full_name', form.full_name.value.trim());
+    data.append('phone', form.phone.value.trim());
+    const consented = document.getElementById('sms_consent').checked;
+    data.append('sms_consent', consented ? 'true' : 'false');
+    data.append('page_url', window.location.href);
+    // honeypot (leave empty)
+    const botField = form.querySelector('[name="bot-field"]');
+    if (botField) data.append('bot-field', botField.value);
 
     try {
-      const res = await fetch('/.netlify/functions/sms-optin', {
+      const res = await fetch('/sms-opt-in', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: data.toString(),
       });
-      const body = await res.json();
-      if (res.ok && body.ok) {
+      if (res.ok) {
         msg.className = 'msg success';
-        if (body.sms_consent) {
+        if (consented) {
           msg.textContent = "You're signed up! You'll get order updates by text.";
         } else {
           msg.textContent = "Got it — you're not signed up for texts. Check the box and submit again any time if you change your mind.";
         }
         form.reset();
       } else {
-        throw new Error(body.error || 'Something went wrong. Please try again.');
+        throw new Error('Something went wrong. Please try again.');
       }
     } catch (err) {
       msg.className = 'msg error';
