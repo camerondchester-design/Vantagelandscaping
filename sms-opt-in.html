@@ -1,5 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+ <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M9WWBWF189"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-M9WWBWF189');
+</script>
+
+<!-- Conversion tracking -->
+<script>
+(function() {
+  function fireCall() { gtag('event', 'call_click'); }
+  function fireText() { gtag('event', 'text_click'); }
+  function fireEmail() { gtag('event', 'email_click'); }
+  function fireQuoteCTA() { gtag('event', 'quote_cta_click'); }
+
+  document.addEventListener('click', function(e) {
+    var el = e.target.closest('a[href]');
+    if (!el) return;
+    var href = el.getAttribute('href') || '';
+    if (href.startsWith('tel:+18017506820')) fireCall();
+    if (href.startsWith('sms:+18017506820')) fireText();
+    if (href.startsWith('mailto:')) fireEmail();
+  });
+
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('[data-track="quote-cta"]')) fireQuoteCTA();
+  });
+})();
+</script>
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
